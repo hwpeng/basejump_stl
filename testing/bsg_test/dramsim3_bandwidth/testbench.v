@@ -109,7 +109,7 @@ module testbench();
 
   bsg_test_master #(
     .channel_addr_width_p(`dram_pkg::channel_addr_width_p)
-    ,.num_request_p(2)
+    ,.num_request_p(2) // the max number of request that this thing can send out.
   ) tm0 (
     .clk_i(clk)
     ,.reset_i(reset)
