@@ -23,11 +23,12 @@ module bsg_test_master
   // credit counter
   logic credit_up;
   logic credit_down;
-  logic [`BSG_WIDTH(max_val_p)-1:0] credit_lo;
+  logic [`BSG_WIDTH(num_request_p)-1:0] credit_lo;
 
   bsg_counter_up_down #(
     .max_val_p(num_request_p)
     ,.init_val_p(num_request_p)
+    ,.max_step_p(1)
   ) cc0 (
     .clk_i(clk_i)
     ,.reset_i(reset_i)

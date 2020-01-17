@@ -1,7 +1,7 @@
 `include "bsg_nonsynth_dramsim3.svh"
 
 
-`define dram_pkg bsg_nonsynth_dramsim3_hbm2_8gb_x128_pkg
+`define dram_pkg bsg_dramsim3_hbm2_8gb_x128_pkg
 
 module testbench();
 
@@ -97,6 +97,8 @@ module testbench();
     ,.yumi_i(fifo_yumi_li)
   );
 
+  assign tr_yumi_li = tr_v_lo & fifo_ready_lo;
+
 
   // requester
   //
@@ -163,7 +165,7 @@ module testbench();
   assign dram_yumi_li = dramsim3_yumi_lo[0];
   assign dram_data_v_li = dramsim3_data_v_lo[0];
 
-  for (genvar i = 1; i < `dram_pkg::channel_addr_width_p; i++) begin
+  for (genvar i = 1; i < `dram_pkg::num_channels_p; i++) begin
     assign dramsim3_v_li[i] = 1'b0;
     assign dramsim3_ch_addr_li[i] = '0;
   end
