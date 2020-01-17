@@ -56,6 +56,75 @@ module testbench();
   ); 
 
 
+  bsg_nonsynth_test_rom #(
+    .filename_p("trace.tr")
+    ,.data_width_p(payload_width_p+4)
+    ,.addr_width_p(rom_addr_width_p)
+  ) trom0 (
+    .addr_i(rom_addr)
+    ,.data_o(rom_data)
+  );
+
+
+  // request fifo
+  //
+  logic fifo_ready_lo;
+  logic fifo_v_lo;
+  logic [payload_width_p-1:0] fifo_data_lo;
+  logic fifo_yumi_li;
+
+  bsg_fifo_1r1w_small #(
+    .width_p(payload_width_p)
+    ,.els_p(16)
+  ) req_fifo0 (
+    .clk_i(clk)
+    ,.reset_i(reset)
+
+    ,.v_i(tr_v_lo)
+    ,.ready_o(fifo_ready_lo)
+    ,.data_i(tr_data_lo)
+
+    ,.v_o(fifo_v_lo)
+    ,.data_o(fifo_data_lo)
+    ,.yumi_i(fifo_yumi_li)
+  );
+
+  // requester
+  //
+  bsg_test_master #(
+  ) tm0 (
+    .clk_i(clk)
+    ,.reset_i(reset)
+
+  );
+
+  // dramsim3
+  //
+  bsg_nonsynth_dramsim3 #(
+    .channel_addr_width_p()
+    ,.data_width_p()
+    ,.num_channels_p()
+    ,.num_columns_p()
+    ,.address_mapping_p()
+    ,.size_in_bits_p()
+    ,.config_p()
+  ) DUT (
+    .clk_i(clk)
+    ,.reset_i(reset)
+
+    ,.v_i()
+    ,.write_not_read_i()
+    ,.ch_addr_i()
+    ,.yumi_o()
+
+    ,.data_v_i()
+    ,.data_i()
+    ,.data_yumi_o()
+
+    ,.data_v_o()
+    ,.data_o()
+  ); 
+
 
 
 
