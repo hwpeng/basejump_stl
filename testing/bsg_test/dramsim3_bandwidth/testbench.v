@@ -5,12 +5,14 @@
 
 module testbench();
 
+  parameter num_request_p = 2;
+
 
   bit clk;
   bit reset;
 
   bsg_nonsynth_clock_gen #(
-    .cycle_time_p(100)
+    .cycle_time_p(1000)
   ) cg0 (
     .o(clk)
   );
@@ -29,7 +31,7 @@ module testbench();
 
   // trace replay
   localparam payload_width_p = `dram_pkg::channel_addr_width_p;
-  localparam rom_addr_width_p = 16;
+  localparam rom_addr_width_p = 20;
 
   logic tr_v_lo;
   logic [payload_width_p-1:0] tr_data_lo;
@@ -83,7 +85,7 @@ module testbench();
 
   bsg_fifo_1r1w_small #(
     .width_p(payload_width_p)
-    ,.els_p(32)
+    ,.els_p(1024)
   ) req_fifo0 (
     .clk_i(clk)
     ,.reset_i(reset)
@@ -109,7 +111,7 @@ module testbench();
 
   bsg_test_master #(
     .channel_addr_width_p(`dram_pkg::channel_addr_width_p)
-    ,.num_request_p(2) // the max number of request that this thing can send out.
+    ,.num_request_p(num_request_p) // the max number of request that this thing can send out.
   ) tm0 (
     .clk_i(clk)
     ,.reset_i(reset)
@@ -174,16 +176,19 @@ module testbench();
 
   // request tracker
   integer sent_r;
+  integer dram_req_sent_r;
   integer recv_r;
 
   always_ff @ (posedge clk) begin
     if (reset) begin
       sent_r <= 0;
       recv_r <= 0;
+      dram_req_sent_r <= 0;
     end
     else begin
       if (tr_v_lo & tr_yumi_li) sent_r++;
       if (dramsim3_data_v_lo) recv_r++;
+      if (dram_v_lo & dram_yumi_li) dram_req_sent_r++;
     end
   end
 

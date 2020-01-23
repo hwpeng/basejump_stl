@@ -1,3 +1,5 @@
+import random
+
 class TraceGen:
 
   def __init__(self, addr_width_p):
@@ -19,6 +21,12 @@ class TraceGen:
 
 if __name__ == "__main__":
   tg=TraceGen(30)
-  for i in range(8):
-    tg.send_read(i*64)
+  random.seed(0)
+  #for i in range(1024*1024/32):
+  for i in range(4000):
+    addr = random.randint(0,(2**14)-1)
+    tg.send_read(addr<<5)
+  #KB = 1024
+  #for i in range(KB*1024/32):
+  #  tg.send_read(i*32)
   tg.done()

@@ -15,7 +15,7 @@ CFLAGS += -CFLAGS "-DBASEJUMP_STL_DIR=$(BASEJUMP_STL_DIR)"
 
 all: sim
 
-trace.tr:
+trace.tr: trace_gen.py
 	python trace_gen.py > trace.tr
 
 sim: trace.tr
@@ -27,6 +27,6 @@ dve:
 	dve -full64 -vpd vcdplus.vpd &
 
 clean:
-	rm -rf csrc simv.daidir simv ucli.key vcdplus.vpd vc_hdrs.h
+	rm -rf csrc simv.daidir simv ucli.key vcdplus.vpd vc_hdrs.h DVEfiles
 	rm -f vcs.log bsg_nonsynth_dramsim3_trace.txt dramsim3epoch.json
 	rm -f trace.tr
