@@ -179,7 +179,7 @@ module testbench();
   integer dram_req_sent_r;
   integer recv_r;
 
-  always_ff @ (posedge clk) begin
+  always_ff @ (negedge clk) begin
     if (reset) begin
       sent_r <= 0;
       recv_r <= 0;
