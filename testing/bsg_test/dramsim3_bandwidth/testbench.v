@@ -5,7 +5,7 @@
 
 module testbench();
 
-  parameter num_request_p = 2;
+  parameter num_request_p = 64;
 
 
   bit clk;

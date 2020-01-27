@@ -11,6 +11,7 @@ CFLAGS += -CFLAGS "-I$(BASEJUMP_STL_DIR)/imports/DRAMSim3/src"
 CFLAGS += -CFLAGS "-I$(BASEJUMP_STL_DIR)/imports/DRAMSim3/ext/headers"
 CFLAGS += -CFLAGS "-I$(BASEJUMP_STL_DIR)/imports/DRAMSim3/ext/fmt/include"
 CFLAGS += -CFLAGS "-DFMT_HEADER_ONLY=1"
+CFLAGS += -CFLAGS "-DCMD_TRACE"
 CFLAGS += -CFLAGS "-DBASEJUMP_STL_DIR=$(BASEJUMP_STL_DIR)"
 
 all: sim
@@ -29,4 +30,4 @@ dve:
 clean:
 	rm -rf csrc simv.daidir simv ucli.key vcdplus.vpd vc_hdrs.h DVEfiles
 	rm -f vcs.log bsg_nonsynth_dramsim3_trace.txt dramsim3epoch.json
-	rm -f trace.tr
+	rm -f trace.tr *.trace

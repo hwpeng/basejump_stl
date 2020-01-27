@@ -22,11 +22,11 @@ class TraceGen:
 if __name__ == "__main__":
   tg=TraceGen(30)
   random.seed(0)
-  for i in range(1024*1024/32):
+  #for i in range(2*1024*1024/32):
   #for i in range(4000):
-    addr = random.randint(0,(2**25)-1)
-    tg.send_read(addr<<5)
-  #KB = 1024
-  #for i in range(KB*1024/32):
-  #  tg.send_read(i*32)
+  #  addr = random.randint(0,(2**25)-1)
+  #  tg.send_read(addr<<5)
+  KB = 1024
+  for i in range(KB*1024/32):
+    tg.send_read(i*32)
   tg.done()
