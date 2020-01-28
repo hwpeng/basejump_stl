@@ -85,6 +85,7 @@ module testbench();
   logic [num_channels_p-1:0] dramsim3_write_not_read_li;
 
   logic [num_channels_p-1:0] dramsim3_data_v_lo;
+  logic [num_channels_p-1:0] dramsim3_write_done_lo;
 
   bsg_nonsynth_dramsim3 #(
     .channel_addr_width_p(`dram_pkg::channel_addr_width_p)
@@ -110,6 +111,9 @@ module testbench();
 
     ,.data_v_o(dramsim3_data_v_lo)
     ,.data_o()
+
+    ,.write_done_o(dramsim3_write_done_lo)
+    ,.write_done_ch_addr_o()
   ); 
 
   assign dramsim3_v_li[0] = tr_v_lo;
@@ -134,7 +138,7 @@ module testbench();
     end
     else begin
       if (tr_v_lo & tr_yumi_li) sent_r <= sent_r + 1;
-      if (dramsim3_data_v_lo[0]) recv_r <= recv_r + 1;
+      recv_r <= recv_r + dramsim3_data_v_lo[0] + dramsim3_write_done_lo[0];
     end
   end
 

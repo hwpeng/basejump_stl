@@ -33,6 +33,11 @@ module bsg_nonsynth_dramsim3
 
     , output logic [num_channels_p-1:0] data_v_o
     , output logic [num_channels_p-1:0][data_width_p-1:0] data_o
+
+    // this is for debugging/measuring performance.
+    // its usage is optional.
+    , output logic [num_channels_p-1:0] write_done_o
+    , output logic [num_channels_p-1:0][channel_addr_width_p-1:0] write_done_ch_addr_o
   );
 
 
@@ -54,6 +59,12 @@ module bsg_nonsynth_dramsim3
   
   import "DPI-C" context function 
     longint bsg_dramsim3_get_read_done_addr(int ch);
+
+  import "DPI-C" context function 
+    bit     bsg_dramsim3_get_write_done(int ch);
+  
+  import "DPI-C" context function 
+    longint bsg_dramsim3_get_write_done_addr(int ch);
   
   import "DPI-C" context function
     void    bsg_dramsim3_tick();
@@ -102,9 +113,28 @@ module bsg_nonsynth_dramsim3
        ,.address_mapping_p(address_mapping_p)
        ,.channel_select_p(i)
        ,.debug_p(debug_p))
-    unmap
+    unmap_read_done_addr
       (.mem_addr_i(read_done_addr[i])
        ,.ch_addr_o(read_done_ch_addr[i]));
+  end
+
+  // write channel signal
+  logic [num_channels_p-1:0][lg_num_channels_lp+channel_addr_width_p-1:0] write_done_addr;
+
+  for (genvar i = 0; i < num_channels_p; i++) begin
+
+    bsg_nonsynth_dramsim3_unmap
+     #(.channel_addr_width_p(channel_addr_width_p)
+       ,.data_width_p(data_width_p)
+       ,.num_channels_p(num_channels_p)
+       ,.num_columns_p(num_columns_p)
+       ,.address_mapping_p(address_mapping_p)
+       ,.channel_select_p(i)
+       ,.debug_p(debug_p))
+    unmap_write_done_addr
+      (.mem_addr_i(write_done_addr[i])
+       ,.ch_addr_o(write_done_ch_addr_o[i]));
+
   end
 
 
@@ -112,6 +142,8 @@ module bsg_nonsynth_dramsim3
     if (reset_i) begin
       read_done <= '0;
       read_done_addr <= '0;
+      write_done_o <= '0;
+      write_done_addr <= '0;
     end
     else begin
 
@@ -120,6 +152,10 @@ module bsg_nonsynth_dramsim3
         read_done[i] = bsg_dramsim3_get_read_done(i);
         if (read_done[i])
           read_done_addr[i] = bsg_dramsim3_get_read_done_addr(i);
+
+        write_done_o[i] = bsg_dramsim3_get_write_done(i);
+        if (write_done_o[i])
+          write_done_addr[i] = bsg_dramsim3_get_write_done_addr(i);
       end
 
       // tick
@@ -211,6 +247,10 @@ module bsg_nonsynth_dramsim3
           begin
              $display("read done: t=%012t, channel=%0d, addr=%010x", $time, i, read_done_ch_addr[i]);
              $fwrite(file, "recv,%t,%0d,,%08h\n", $time, i, read_done_ch_addr[i]);
+          end
+        if (write_done_o[i])
+          begin
+             $display("write done: t=%012t, channel=%0d, addr=%010x", $time, i, write_done_ch_addr_o[i]);
           end
       end
     end
