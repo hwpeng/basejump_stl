@@ -5,9 +5,6 @@
 
 module testbench();
 
-  parameter num_request_p = 64;
-
-
   bit clk;
   bit reset;
 
@@ -30,11 +27,16 @@ module testbench();
   import `dram_pkg::*;
 
   // trace replay
-  localparam payload_width_p = `dram_pkg::channel_addr_width_p;
+  localparam payload_width_p = `dram_pkg::channel_addr_width_p + 1;
   localparam rom_addr_width_p = 20;
 
+  typedef struct packed {
+    logic write_not_read;
+    logic [`dram_pkg::channel_addr_width_p-1:0] ch_addr;
+  } trace_s;
+
+  trace_s tr_data_lo;
   logic tr_v_lo;
-  logic [payload_width_p-1:0] tr_data_lo;
   logic tr_yumi_li;
 
   logic [rom_addr_width_p-1:0] rom_addr;
@@ -65,7 +67,6 @@ module testbench();
     ,.error_o()
   ); 
 
-
   bsg_nonsynth_test_rom #(
     .filename_p("trace.tr")
     ,.data_width_p(payload_width_p+4)
@@ -76,63 +77,12 @@ module testbench();
   );
 
 
-  // request fifo
-  //
-  logic fifo_ready_lo;
-  logic fifo_v_lo;
-  logic [payload_width_p-1:0] fifo_data_lo;
-  logic fifo_yumi_li;
-
-  bsg_fifo_1r1w_small #(
-    .width_p(payload_width_p)
-    ,.els_p(1024)
-  ) req_fifo0 (
-    .clk_i(clk)
-    ,.reset_i(reset)
-
-    ,.v_i(tr_v_lo)
-    ,.ready_o(fifo_ready_lo)
-    ,.data_i(tr_data_lo)
-
-    ,.v_o(fifo_v_lo)
-    ,.data_o(fifo_data_lo)
-    ,.yumi_i(fifo_yumi_li)
-  );
-
-  assign tr_yumi_li = tr_v_lo & fifo_ready_lo;
-
-
-  // requester
-  //
-  logic dram_v_lo;
-  logic [channel_addr_width_p-1:0] dram_ch_addr_lo;
-  logic dram_yumi_li;
-  logic dram_data_v_li;
-
-  bsg_test_master #(
-    .channel_addr_width_p(`dram_pkg::channel_addr_width_p)
-    ,.num_request_p(num_request_p) // the max number of request that this thing can send out.
-  ) tm0 (
-    .clk_i(clk)
-    ,.reset_i(reset)
-
-    ,.v_i(fifo_v_lo)
-    ,.ch_addr_i(fifo_data_lo)
-    ,.yumi_o(fifo_yumi_li)
-
-    ,.dram_v_o(dram_v_lo)
-    ,.dram_ch_addr_o(dram_ch_addr_lo)
-    ,.dram_yumi_i(dram_yumi_li)
-
-    ,.dram_data_v_i(dram_data_v_li)
-  );
-
-
   // dramsim3
   //
   logic [num_channels_p-1:0] dramsim3_v_li;
   logic [num_channels_p-1:0][channel_addr_width_p-1:0] dramsim3_ch_addr_li;
   logic [num_channels_p-1:0] dramsim3_yumi_lo;
+  logic [num_channels_p-1:0] dramsim3_write_not_read_li;
 
   logic [num_channels_p-1:0] dramsim3_data_v_lo;
 
@@ -150,7 +100,7 @@ module testbench();
     ,.reset_i(reset)
 
     ,.v_i(dramsim3_v_li)
-    ,.write_not_read_i('0) // you can only read in this test.
+    ,.write_not_read_i(dramsim3_write_not_read_li)
     ,.ch_addr_i(dramsim3_ch_addr_li)
     ,.yumi_o(dramsim3_yumi_lo)
 
@@ -162,33 +112,29 @@ module testbench();
     ,.data_o()
   ); 
 
-  assign dramsim3_v_li[0] = dram_v_lo;
-  assign dramsim3_ch_addr_li[0] = dram_ch_addr_lo;
-  assign dram_yumi_li = dramsim3_yumi_lo[0];
-  assign dram_data_v_li = dramsim3_data_v_lo[0];
+  assign dramsim3_v_li[0] = tr_v_lo;
+  assign dramsim3_write_not_read_li[0] = tr_data_lo.write_not_read;
+  assign dramsim3_ch_addr_li[0] = tr_data_lo.ch_addr;
+  assign tr_yumi_li = dramsim3_yumi_lo[0];
 
   for (genvar i = 1; i < `dram_pkg::num_channels_p; i++) begin
     assign dramsim3_v_li[i] = 1'b0;
     assign dramsim3_ch_addr_li[i] = '0;
+    assign dramsim3_write_not_read_li[i] = 1'b0;
   end
-
-
 
   // request tracker
   integer sent_r;
-  integer dram_req_sent_r;
   integer recv_r;
 
   always_ff @ (negedge clk) begin
     if (reset) begin
       sent_r <= 0;
       recv_r <= 0;
-      dram_req_sent_r <= 0;
     end
     else begin
-      if (tr_v_lo & tr_yumi_li) sent_r++;
-      if (dramsim3_data_v_lo) recv_r++;
-      if (dram_v_lo & dram_yumi_li) dram_req_sent_r++;
+      if (tr_v_lo & tr_yumi_li) sent_r <= sent_r + 1;
+      if (dramsim3_data_v_lo[0]) recv_r <= recv_r + 1;
     end
   end
 

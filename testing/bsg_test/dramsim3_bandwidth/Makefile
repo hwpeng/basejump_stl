@@ -1,5 +1,5 @@
-export BSG_CADENV_DIR = $(abspath ../../../../bsg_cadenv)
 export BASEJUMP_STL_DIR = $(abspath ../../..)
+export BSG_CADENV_DIR = $(abspath ../../../../bsg_cadenv)
 include $(BSG_CADENV_DIR)/cadenv.mk
 
 INCDIR += +incdir+$(BASEJUMP_STL_DIR)/bsg_misc
@@ -14,20 +14,27 @@ CFLAGS += -CFLAGS "-DFMT_HEADER_ONLY=1"
 CFLAGS += -CFLAGS "-DCMD_TRACE"
 CFLAGS += -CFLAGS "-DBASEJUMP_STL_DIR=$(BASEJUMP_STL_DIR)"
 
-all: sim
+VCS_FLAGS = -full64 +lint=all,noSVA-UA,noSVA-NSVU,noVCDE +v2k -cpp g++
+VCS_FLAGS += -sverilog -full64 -timescale=1ps/1ps +vcs+vcdpluson
 
-trace.tr: trace_gen.py
-	python trace_gen.py > trace.tr
+SIMV = $(abspath simv)
 
-sim: trace.tr
-	vcs -R +v2k +lint=all,noSVA-UA,noSVA-NSVU,noVCDE \
-		-cpp g++ $(CFLAGS) $(INCDIR) \
-		-sverilog -full64 -f sv.include -timescale=1ps/1ps +vcs+vcdpluson -l vcs.log
+simv:
+	vcs $(VCS_FLAGS) -f sv.include -l vcs.log $(INCDIR) $(CFLAGS)
 
-dve:
-	dve -full64 -vpd vcdplus.vpd &
+out/%/trace.tr:
+	mkdir -p out
+	mkdir -p out/$*
+	python $*.py > $@
+
+%.run: simv out/%/trace.tr
+	(cd out/$*; $(SIMV) -l simv.log)
+
+%.dve:
+	dve -full64 -vpd out/$*/vcdplus.vpd &
 
 clean:
 	rm -rf csrc simv.daidir simv ucli.key vcdplus.vpd vc_hdrs.h DVEfiles
 	rm -f vcs.log bsg_nonsynth_dramsim3_trace.txt dramsim3epoch.json
-	rm -f trace.tr *.trace
+	rm -f trace.tr *.trace *.pyc
+	rm -rf out
