@@ -159,6 +159,13 @@ extern "C" bool bsg_dramsim3_init(
     /* sanity check */
     const Config *cfg = _memory_system->GetConfig();
 
+    pr_dbg("ro_pos=%d\n", cfg->ro_pos);
+    pr_dbg("ra_pos=%d\n", cfg->ra_pos);
+    pr_dbg("bg_pos=%d\n", cfg->bg_pos);
+    pr_dbg("ba_pos=%d\n", cfg->ba_pos);
+    pr_dbg("ch_pos=%d\n", cfg->ch_pos);
+    pr_dbg("co_pos=%d\n", cfg->co_pos);
+
     /* calculate device size */
     long long channels = cfg->channels;
     long long channel_size = cfg->channel_size;
