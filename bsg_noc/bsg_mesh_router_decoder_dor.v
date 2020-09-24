@@ -15,6 +15,10 @@ module bsg_mesh_router_decoder_dor
     , parameter dirs_lp = (2*dims_p)+1
     , parameter ruche_factor_X_p=0
     , parameter ruche_factor_Y_p=0
+    // broadcast_1d_p = 0: nomral
+    // broadcast_1d_p = 1: broadcast to all nodes at X or Y, 
+    //                     dirs become source node coords
+    , parameter broadcast_1d_p=0
     // XY_order_p = 1 :  X then Y
     // XY_order_p = 0 :  Y then X
     , parameter XY_order_p = 1
@@ -30,6 +34,8 @@ module bsg_mesh_router_decoder_dor
 
     , input [x_cord_width_p-1:0] x_dirs_i
     , input [y_cord_width_p-1:0] y_dirs_i
+      
+    , input broadcast_dirs_i
 
     , input [x_cord_width_p-1:0] my_x_i
     , input [y_cord_width_p-1:0] my_y_i
@@ -71,7 +77,8 @@ module bsg_mesh_router_decoder_dor
 
 
   // P-port
-  assign req[P] = x_eq & y_eq;
+  assign req[P] = (broadcast_1d_p == 0)? x_eq & y_eq
+                                       : 1'b1;
 
 
   if (ruche_factor_X_p > 0) begin
@@ -123,7 +130,7 @@ module bsg_mesh_router_decoder_dor
     end
 
   end
-  else begin
+  else if (broadcast_1d_p == 0) begin
     if (XY_order_p) begin
       assign req[W] = x_lt;
       assign req[E] = x_gt;
@@ -132,6 +139,10 @@ module bsg_mesh_router_decoder_dor
       assign req[W] = y_eq & x_lt;
       assign req[E] = y_eq & x_gt;
     end
+  end
+  else begin
+      assign req[W] = ~broadcast_dirs_i & (~x_lt);
+      assign req[E] = ~broadcast_dirs_i & (~x_gt);
   end
 
 
@@ -184,7 +195,7 @@ module bsg_mesh_router_decoder_dor
     end
 
   end
-  else begin
+  else if (broadcast_1d_p == 0) begin
     if (XY_order_p) begin
       assign req[N] = x_eq & y_lt;
       assign req[S] = x_eq & y_gt;
@@ -194,14 +205,19 @@ module bsg_mesh_router_decoder_dor
       assign req[S] = y_gt;
     end
   end
+  else begin
+      assign req[N] = broadcast_dirs_i & (~y_lt);
+      assign req[S] = broadcast_dirs_i & (~y_gt);
+  end
 
 
   // synopsys translate_off
   if (debug_p) begin
     always_ff @ (negedge clk_i) begin
       if (~reset_i) begin
-        assert($countones(req_o) < 2)
-          else $fatal("multiple req_o detected. i=%d, %b", req_o);
+        if (broadcast_1d_p == 0)
+            assert($countones(req_o) < 2)
+              else $fatal("multiple req_o detected. i=%d, %b", req_o);
       end
     end
   end

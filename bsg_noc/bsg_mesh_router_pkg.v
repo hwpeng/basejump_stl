@@ -86,5 +86,15 @@ package bsg_mesh_router_pkg;
   };
 
 
+  // broadcast_1d_p = 1
+  // dims_p = 2
+  localparam bit [4:0][4:0] Broadcast_1D = {
+    //  SNEWP (input)
+     5'b01001  // S
+    ,5'b10001  // N
+    ,5'b00011  // E
+    ,5'b00101  // W
+    ,5'b11111  // P (output)
+  };
 
 endpackage
