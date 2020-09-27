@@ -15,7 +15,7 @@ module bsg_mesh_router_decoder_dor
     , parameter dirs_lp = (2*dims_p)+1
     , parameter ruche_factor_X_p=0
     , parameter ruche_factor_Y_p=0
-    // broadcast_1d_p = 0: nomral
+    // broadcast_1d_p = 0: normal
     // broadcast_1d_p = 1: broadcast to all nodes at X or Y, 
     //                     dirs become source node coords
     , parameter broadcast_1d_p=0
@@ -35,8 +35,6 @@ module bsg_mesh_router_decoder_dor
     , input [x_cord_width_p-1:0] x_dirs_i
     , input [y_cord_width_p-1:0] y_dirs_i
       
-    , input broadcast_dirs_i
-
     , input [x_cord_width_p-1:0] my_x_i
     , input [y_cord_width_p-1:0] my_y_i
 
@@ -62,6 +60,8 @@ module bsg_mesh_router_decoder_dor
 
 
 
+  // Directions for 1d broadcast, 0: X, 1: Y
+  wire broadcast_dirs = x_dirs_i[0];
 
   // compare coordinates
   wire x_eq = (x_dirs_i == my_x_i);
@@ -141,8 +141,22 @@ module bsg_mesh_router_decoder_dor
     end
   end
   else begin
-      assign req[W] = ~broadcast_dirs_i & (~x_lt);
-      assign req[E] = ~broadcast_dirs_i & (~x_gt);
+    if (from_p[P]) begin
+      assign req[W] = ~broadcast_dirs;
+      assign req[E] = ~broadcast_dirs;
+    end
+    else if (from_p[W]) begin
+      assign req[W] = 0;
+      assign req[E] = ~broadcast_dirs;
+    end
+    else if (from_p[E]) begin
+      assign req[W] = ~broadcast_dirs;
+      assign req[E] = 0; 
+    end
+    else begin
+      assign req[W] = 0;
+      assign req[E] = 0; 
+    end
   end
 
 
@@ -206,8 +220,22 @@ module bsg_mesh_router_decoder_dor
     end
   end
   else begin
-      assign req[N] = broadcast_dirs_i & (~y_lt);
-      assign req[S] = broadcast_dirs_i & (~y_gt);
+    if (from_p[P]) begin
+      assign req[N] = broadcast_dirs;
+      assign req[S] = broadcast_dirs;
+    end
+    else if (from_p[N]) begin
+      assign req[N] = 0;
+      assign req[S] = broadcast_dirs;
+    end
+    else if (from_p[S]) begin
+      assign req[N] = broadcast_dirs;
+      assign req[S] = 0; 
+    end
+    else begin
+      assign req[N] = 0;
+      assign req[S] = 0; 
+    end
   end
 
 

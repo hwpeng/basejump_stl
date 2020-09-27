@@ -43,13 +43,10 @@ module bsg_mesh_router
   // input x,y coords
   logic [dirs_lp-1:0][x_cord_width_p-1:0] x_dirs;
   logic [dirs_lp-1:0][y_cord_width_p-1:0] y_dirs;
-  // broadcast direction, 0: X, 1: Y
-  logic [dirs_lp-1:0] broadcast_dirs;
 
   for (genvar i = 0; i < dirs_lp; i++) begin
     assign x_dirs[i] = data_i[i][0+:x_cord_width_p];
     assign y_dirs[i] = data_i[i][x_cord_width_p+:y_cord_width_p];
-    assign broadcast_dirs[i] = data_i[i][x_cord_width_p+y_cord_width_p];
   end
 
 
@@ -73,7 +70,6 @@ module bsg_mesh_router
       ,.v_i(v_i[i])
       ,.x_dirs_i(x_dirs[i])
       ,.y_dirs_i(y_dirs[i])
-      ,.broadcast_dirs_i(broadcast_dirs[i])
       ,.my_x_i(my_x_i)
       ,.my_y_i(my_y_i)
 
